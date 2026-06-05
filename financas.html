@@ -1117,7 +1117,7 @@
 
     // Balance
     const balEl = document.getElementById('balanceDisplay');
-    balEl.textContent = fmt(balance);
+    balEl.textContent = fmtSigned(balance);
     balEl.className = 'value balance ' + (balance > 0 ? 'positive' : balance < 0 ? 'negative' : 'zero');
 
     const pct = income > 0 ? Math.min((expense / income) * 100, 100) : 0;
@@ -1130,9 +1130,11 @@
     const nuTxs = txs.filter(t => t.account === 'nubank');
     const picBal = picTxs.filter(t=>t.category!=='transfer').reduce((s,t) => t.type==='income' ? s+t.amount : s-t.amount, 0);
     const nuBal = nuTxs.filter(t=>t.category!=='transfer').reduce((s,t) => t.type==='income' ? s+t.amount : s-t.amount, 0);
-    document.getElementById('picpayBalance').textContent = fmt(picBal);
+    document.getElementById('picpayBalance').textContent = fmtSigned(picBal);
+    document.getElementById('picpayBalance').style.color = picBal >= 0 ? 'var(--text)' : 'var(--red)';
     document.getElementById('picpayCount').textContent = `${picTxs.length} movimentações`;
-    document.getElementById('nubankBalance').textContent = fmt(nuBal);
+    document.getElementById('nubankBalance').textContent = fmtSigned(nuBal);
+    document.getElementById('nubankBalance').style.color = nuBal >= 0 ? 'var(--text)' : 'var(--red)';
     document.getElementById('nubankCount').textContent = `${nuTxs.length} movimentações`;
 
     // Categories
@@ -1471,6 +1473,17 @@
             account = 'picpay';
             // Composite key: date + time + amount + destination
             txId = 'pp_' + rawDate + '_' + (rawHora||'').trim() + '_' + amount.toFixed(2) + '_' + desc.substring(0,20);
+
+            // Salary rule: Pix received on PicPay from own name (BB transfer) → mark as salary
+            const isSelfTransferBB = type === 'income' && /ricardo batista dos santos/i.test(desc);
+            if (isSelfTransferBB) {
+              // Accumulate into salary field for the month instead of a transaction
+              const salaryMd = getMonthData(dateObj.getFullYear(), dateObj.getMonth());
+              salaryMd.salary = (salaryMd.salary || 0) + amount;
+              saveData();
+              imported++;
+              continue; // skip adding as regular transaction
+            }
           }
 
           // ── GENÉRICO ──
@@ -1569,7 +1582,7 @@
     document.getElementById('accountModalTitle').innerHTML = `<span style="color:${color}">${label}</span>`;
 
     // Update totals boxes
-    document.getElementById('totalAllVal').textContent = fmt(bal);
+    document.getElementById('totalAllVal').textContent = fmtSigned(bal);
     document.getElementById('totalAllVal').style.color = bal >= 0 ? 'var(--green)' : 'var(--red)';
     document.getElementById('totalIncomeVal').textContent = '+ ' + fmt(totalIncome);
     document.getElementById('totalExpenseVal').textContent = '- ' + fmt(totalExpense);
@@ -1710,7 +1723,14 @@
 
   // ===== UTILS =====
   function fmt(val) {
-    return 'R$ ' + Math.abs(val).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+    const abs = Math.abs(val).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+    return 'R$ ' + abs;
+  }
+
+  function fmtSigned(val) {
+    const abs = Math.abs(val).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+    if (val < 0) return '- R$ ' + abs;
+    return 'R$ ' + abs;
   }
 
   function showToast(msg, type = 'success') {
