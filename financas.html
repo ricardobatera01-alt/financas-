@@ -792,7 +792,7 @@
     <div>
       <div class="section-title">Contas</div>
       <div class="accounts-row">
-        <div class="account-card">
+        <div class="account-card" onclick="openAccountModal('picpay')" style="cursor:pointer">
           <div class="account-top">
             <div class="account-dot picpay"></div>
             <div class="account-name" style="color:#21c25e">PicPay</div>
@@ -800,7 +800,7 @@
           <div class="account-balance" id="picpayBalance">R$ 0,00</div>
           <div class="account-txcount" id="picpayCount">0 movimentações</div>
         </div>
-        <div class="account-card">
+        <div class="account-card" onclick="openAccountModal('nubank')" style="cursor:pointer">
           <div class="account-top">
             <div class="account-dot nubank"></div>
             <div class="account-name" style="color:#8a2be2">Nubank</div>
@@ -950,6 +950,24 @@
     </div>
     <button class="submit-btn" onclick="saveSalary()">Salvar</button>
     <button class="cancel-btn" onclick="closeSalaryModal()">cancelar</button>
+  </div>
+</div>
+
+
+<!-- ACCOUNT MODAL -->
+<div class="modal-overlay" id="accountModal" onclick="closeAccountModal(event)">
+  <div class="modal" style="max-height:80vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div class="modal-title" id="accountModalTitle" style="margin-bottom:0"></div>
+      <div id="accountModalBalance" style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="type-btn active-income" id="filterAll" onclick="setAccountFilter('all')" style="flex:1;font-size:0.7rem">Todas</button>
+      <button class="type-btn" id="filterIncome" onclick="setAccountFilter('income')" style="flex:1;font-size:0.7rem">↑ Entradas</button>
+      <button class="type-btn" id="filterExpense" onclick="setAccountFilter('expense')" style="flex:1;font-size:0.7rem">↓ Saídas</button>
+    </div>
+    <div class="tx-list" id="accountTxList"></div>
+    <button class="cancel-btn" onclick="closeAccountModal()">fechar</button>
   </div>
 </div>
 
@@ -1309,14 +1327,22 @@
   }
 
   function parseAmount(raw) {
-    // Handles: -18.50 / −R$ 14,00 / +R$ 700,00 / 1.882,83
+    // Handles:
+    //   Nubank:  -18.50  (ponto = decimal, sem milhar)
+    //   PicPay:  −R$ 1.882,83  (ponto = milhar, vírgula = decimal)
     let s = raw
       .replace(/\u2212/g, '-')   // unicode minus → hyphen
       .replace(/\+/g, '')
       .replace(/R\$\s*/g, '')
-      .replace(/\./g, '')         // thousands separator
-      .replace(',', '.')
       .trim();
+
+    // Se tem vírgula, é formato brasileiro (PicPay): remove pontos de milhar, troca vírgula por ponto
+    if (s.includes(',')) {
+      s = s.replace(/\./g, '').replace(',', '.');
+    }
+    // Se não tem vírgula, é formato Nubank: ponto já é decimal, não mexe
+    // (ex: -18.50, 115.55, 1234.56)
+
     return parseFloat(s);
   }
 
@@ -1448,6 +1474,72 @@
     if (/luz|energia|agua|cagepa|internet|brisanet|aluguel|caixa economica|habitacao|topsat|rastreamento|claro|tim|vivo/.test(d)) return 'bills';
     if (/salario|salário|renda|ricardo batista|uber do brasil/.test(d)) return 'salary';
     return 'other';
+  }
+
+
+  // ===== ACCOUNT MODAL =====
+  let currentAccountFilter = 'all';
+  let currentAccountName = '';
+
+  function openAccountModal(account) {
+    currentAccountName = account;
+    currentAccountFilter = 'all';
+    const md = getMonthData(viewYear, viewMonth);
+    const txs = md.transactions.filter(t => t.account === account);
+    const bal = txs.reduce((s,t) => t.type==='income' ? s+t.amount : s-t.amount, 0);
+
+    const label = account === 'picpay' ? 'PicPay' : 'Nubank';
+    const color = account === 'picpay' ? '#21c25e' : '#8a2be2';
+    document.getElementById('accountModalTitle').innerHTML = `<span style="color:${color}">${label}</span>`;
+    document.getElementById('accountModalBalance').textContent = fmt(bal);
+    document.getElementById('accountModalBalance').style.color = bal >= 0 ? 'var(--green)' : 'var(--red)';
+
+    renderAccountTxList(txs);
+    setAccountFilterButtons('all');
+    document.getElementById('accountModal').classList.add('open');
+  }
+
+  function closeAccountModal(e) {
+    if (!e || e.target.classList.contains('modal-overlay'))
+      document.getElementById('accountModal').classList.remove('open');
+  }
+
+  function setAccountFilter(filter) {
+    currentAccountFilter = filter;
+    setAccountFilterButtons(filter);
+    const md = getMonthData(viewYear, viewMonth);
+    let txs = md.transactions.filter(t => t.account === currentAccountName);
+    if (filter !== 'all') txs = txs.filter(t => t.type === filter);
+    renderAccountTxList(txs);
+  }
+
+  function setAccountFilterButtons(active) {
+    document.getElementById('filterAll').className = 'type-btn' + (active==='all' ? ' active-income' : '');
+    document.getElementById('filterIncome').className = 'type-btn' + (active==='income' ? ' active-income' : '');
+    document.getElementById('filterExpense').className = 'type-btn' + (active==='expense' ? ' active-expense' : '');
+  }
+
+  function renderAccountTxList(txs) {
+    const el = document.getElementById('accountTxList');
+    const sorted = [...txs].sort((a,b) => new Date(b.date) - new Date(a.date));
+    if (!sorted.length) {
+      el.innerHTML = '<div class="empty-state"><div class="ei">💸</div>Nenhuma transação</div>';
+      return;
+    }
+    el.innerHTML = sorted.map(tx => {
+      const cat = CATS.find(c => c.id === tx.category) || CATS[7];
+      const d = new Date(tx.date + 'T12:00:00');
+      const dateStr = d.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'});
+      return `
+        <div class="tx-item">
+          <div class="tx-icon ${tx.type}">${cat.icon}</div>
+          <div class="tx-info">
+            <div class="tx-desc">${tx.desc}</div>
+            <div class="tx-meta">${dateStr} · ${cat.label}</div>
+          </div>
+          <div class="tx-amount ${tx.type}">${tx.type==='expense'?'-':'+'} ${fmt(tx.amount)}</div>
+        </div>`;
+    }).join('');
   }
 
   // ===== UTILS =====
