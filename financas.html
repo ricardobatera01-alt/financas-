@@ -1465,7 +1465,11 @@
             if (isNaN(amount) || isNaN(dateObj.getTime())) continue;
 
             const tipoLower = (rawTipo || '').toLowerCase();
-            if (tipoLower.includes('dinheiro guardado') || tipoLower.includes('cofrinho')) continue;
+            const destLower = (rawDest || '').toLowerCase();
+            // Ignore all cofrinho/savings movements (both directions)
+            if (tipoLower.includes('dinheiro guardado') || tipoLower.includes('cofrinho')
+                || destLower.includes('cofrinho') || destLower.includes('turbinado')
+                || /cofrinho/i.test(rawDest)) continue;
 
             type = (tipoLower.includes('recebido') || tipoLower.includes('recebida')) ? 'income' : 'expense';
             amount = Math.abs(amount);
