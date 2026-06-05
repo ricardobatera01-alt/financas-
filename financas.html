@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Minhas Finanças</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e11;
+    --surface: #16161a;
+    --surface2: #1e1e24;
+    --border: #2a2a35;
+    --text: #f0f0f5;
+    --muted: #6b6b80;
+    --green: #00e5a0;
+    --green-dim: #00e5a015;
+    --red: #ff5c5c;
+    --red-dim: #ff5c5c15;
+    --yellow: #ffd166;
+    --yellow-dim: #ffd16615;
+    --blue: #5c9fff;
+    --picpay: #21c25e;
+    --nubank: #8a2be2;
+    --accent: #00e5a0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    padding: 20px 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.3rem;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  .logo span { color: var(--green); }
+
+  .month-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .month-nav button {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .month-nav button:hover { background: var(--border); }
+
+  #currentMonth {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    color: var(--text);
+    font-size: 0.85rem;
+    min-width: 100px;
+    text-align: center;
+  }
+
+  /* MAIN */
+  main { padding: 16px 20px 100px; display: flex; flex-direction: column; gap: 16px; }
+
+  /* SALARY BANNER */
+  .salary-banner {
+    background: linear-gradient(135deg, #00e5a018, #00e5a005);
+    border: 1px solid #00e5a030;
+    border-radius: 16px;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .salary-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .salary-value {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--green);
+  }
+
+  .salary-edit {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+
+  .salary-edit:hover { color: var(--text); border-color: var(--green); }
+
+  /* SUMMARY CARDS */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+  }
+
+  .card-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .card-value {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+  }
+
+  .card-value.income { color: var(--green); }
+  .card-value.expense { color: var(--red); }
+  .card-value.balance.positive { color: var(--green); }
+  .card-value.balance.negative { color: var(--red); }
+  .card-value.balance.zero { color: var(--muted); }
+
+  .card-sub {
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  /* BALANCE LARGE */
+  .balance-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .balance-left .label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .balance-left .value {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.8rem;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 99px;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: var(--green);
+    transition: width 0.5s ease;
+  }
+
+  .progress-fill.danger { background: var(--red); }
+  .progress-fill.warning { background: var(--yellow); }
+
+  /* ACCOUNTS */
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .accounts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .account-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+  }
+
+  .account-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .account-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+
+  .account-dot.picpay { background: var(--picpay); }
+  .account-dot.nubank { background: var(--nubank); }
+
+  .account-name {
+    font-size: 0.7rem;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .account-balance {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--text);
+  }
+
+  .account-txcount {
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  /* CHART */
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  .bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 80px;
+    margin-top: 12px;
+  }
+
+  .bar-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+
+  .bar-wrap {
+    width: 100%;
+    display: flex;
+    gap: 2px;
+    align-items: flex-end;
+    height: 70px;
+  }
+
+  .bar {
+    flex: 1;
+    border-radius: 4px 4px 0 0;
+    min-height: 2px;
+    transition: height 0.5s ease;
+  }
+
+  .bar.inc { background: var(--green); opacity: 0.8; }
+  .bar.exp { background: var(--red); opacity: 0.8; }
+
+  .bar-label {
+    font-size: 0.55rem;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  /* CATEGORIES */
+  .category-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .cat-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .cat-icon {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  .cat-info { flex: 1; }
+
+  .cat-name {
+    font-size: 0.75rem;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+
+  .cat-bar-bg {
+    height: 3px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .cat-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.5s;
+  }
+
+  .cat-value {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-align: right;
+    min-width: 70px;
+  }
+
+  /* TRANSACTIONS */
+  .tx-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .tx-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .tx-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .tx-icon.income { background: var(--green-dim); }
+  .tx-icon.expense { background: var(--red-dim); }
+
+  .tx-info { flex: 1; min-width: 0; }
+
+  .tx-desc {
+    font-size: 0.8rem;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tx-meta {
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 2px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .tx-account-badge {
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.6rem;
+    font-weight: 600;
+  }
+
+  .tx-account-badge.picpay {
+    background: #21c25e20;
+    color: var(--picpay);
+  }
+
+  .tx-account-badge.nubank {
+    background: #8a2be220;
+    color: var(--nubank);
+  }
+
+  .tx-amount {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  .tx-amount.income { color: var(--green); }
+  .tx-amount.expense { color: var(--red); }
+
+  .tx-delete {
+    background: none;
+    border: none;
+    color: var(--border);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 2px;
+    transition: color 0.15s;
+    flex-shrink: 0;
+  }
+
+  .tx-delete:hover { color: var(--red); }
+
+  /* IMPORT SECTION */
+  .import-card {
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .import-card:hover {
+    border-color: var(--green);
+    background: var(--green-dim);
+  }
+
+  .import-card .icon { font-size: 1.5rem; margin-bottom: 8px; }
+  .import-card .title { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.85rem; margin-bottom: 4px; }
+  .import-card .sub { font-size: 0.7rem; color: var(--muted); }
+
+  #fileInput { display: none; }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 10px 20px 20px;
+    gap: 8px;
+    z-index: 100;
+  }
+
+  .nav-btn {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 10px 8px;
+    border-radius: 12px;
+    font-size: 0.65rem;
+    font-family: 'DM Mono', monospace;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s;
+  }
+
+  .nav-btn .nav-icon { font-size: 1.1rem; }
+  .nav-btn.active { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+  .nav-btn:hover:not(.active) { color: var(--text); border-color: var(--muted); }
+
+  .add-btn {
+    background: var(--green);
+    color: #000;
+    border: none;
+    width: 48px; height: 48px;
+    border-radius: 14px;
+    font-size: 1.4rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    box-shadow: 0 4px 16px #00e5a040;
+  }
+
+  .add-btn:hover { transform: scale(1.05); }
+
+  /* PAGES */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: #0009;
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px 24px 0 0;
+    padding: 24px 20px 40px;
+    width: 100%;
+    max-width: 480px;
+    animation: slideUp 0.25s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .type-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .type-btn {
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+
+  .type-btn.active-income { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+  .type-btn.active-expense { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+
+  .field-group { margin-bottom: 12px; }
+
+  .field-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .field-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+
+  .field-input:focus { border-color: var(--green); }
+
+  select.field-input {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b6b80' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+    cursor: pointer;
+  }
+
+  select.field-input option { background: var(--surface); }
+
+  .cats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+
+  .cat-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 4px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    transition: all 0.15s;
+  }
+
+  .cat-btn .ci { font-size: 1.1rem; }
+  .cat-btn .cn { font-size: 0.55rem; color: var(--muted); }
+  .cat-btn.selected { border-color: var(--accent); background: #00e5a015; }
+  .cat-btn.selected .cn { color: var(--green); }
+
+  .submit-btn {
+    width: 100%;
+    background: var(--green);
+    color: #000;
+    border: none;
+    padding: 14px;
+    border-radius: 14px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    margin-top: 16px;
+    transition: all 0.15s;
+  }
+
+  .submit-btn:hover { opacity: 0.9; }
+
+  .cancel-btn {
+    width: 100%;
+    background: none;
+    color: var(--muted);
+    border: none;
+    padding: 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  .empty-state .ei { font-size: 2rem; margin-bottom: 8px; }
+
+  /* SALARY MODAL SPECIAL */
+  .salary-input-wrap {
+    display: flex;
+    align-items: center;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0 14px;
+    margin-bottom: 16px;
+  }
+
+  .salary-input-wrap:focus-within { border-color: var(--green); }
+  .salary-prefix { color: var(--green); font-family: 'Syne', sans-serif; font-weight: 700; margin-right: 4px; }
+  .salary-input-wrap input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--text);
+    padding: 14px 0;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1.5rem;
+    outline: none;
+    -webkit-appearance: none;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    top: 20px; left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 10px 18px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    z-index: 300;
+    transition: transform 0.25s ease;
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: var(--green); color: var(--green); }
+  .toast.error { border-color: var(--red); color: var(--red); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">fin<span>.</span></div>
+  <div class="month-nav">
+    <button onclick="changeMonth(-1)">‹</button>
+    <span id="currentMonth"></span>
+    <button onclick="changeMonth(1)">›</button>
+  </div>
+</header>
+
+<main>
+  <!-- PAGE: DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+
+    <div class="salary-banner" onclick="openSalaryModal()">
+      <div>
+        <div class="salary-label">Salário do mês</div>
+        <div class="salary-value" id="salaryDisplay">R$ 0,00</div>
+      </div>
+      <button class="salary-edit">✏ editar</button>
+    </div>
+
+    <div class="summary-grid">
+      <div class="card">
+        <div class="card-label">Entradas</div>
+        <div class="card-value income" id="totalIncome">R$ 0,00</div>
+        <div class="card-sub" id="incomeCount">0 transações</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Saídas</div>
+        <div class="card-value expense" id="totalExpense">R$ 0,00</div>
+        <div class="card-sub" id="expenseCount">0 transações</div>
+      </div>
+    </div>
+
+    <div class="balance-card">
+      <div class="balance-left" style="flex:1">
+        <div class="label">Saldo disponível</div>
+        <div class="value" id="balanceDisplay">R$ 0,00</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="balanceBar" style="width:100%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">Contas</div>
+      <div class="accounts-row">
+        <div class="account-card">
+          <div class="account-top">
+            <div class="account-dot picpay"></div>
+            <div class="account-name" style="color:#21c25e">PicPay</div>
+          </div>
+          <div class="account-balance" id="picpayBalance">R$ 0,00</div>
+          <div class="account-txcount" id="picpayCount">0 movimentações</div>
+        </div>
+        <div class="account-card">
+          <div class="account-top">
+            <div class="account-dot nubank"></div>
+            <div class="account-name" style="color:#8a2be2">Nubank</div>
+          </div>
+          <div class="account-balance" id="nubankBalance">R$ 0,00</div>
+          <div class="account-txcount" id="nubankCount">0 movimentações</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">Gastos por categoria</div>
+      <div class="card">
+        <div class="category-list" id="categoryList">
+          <div class="empty-state"><div class="ei">📊</div>Nenhum gasto ainda</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PAGE: TRANSACTIONS -->
+  <div class="page" id="page-transactions">
+    <div class="section-title">Transações</div>
+    <div class="tx-list" id="txList">
+      <div class="empty-state"><div class="ei">💸</div>Nenhuma transação ainda</div>
+    </div>
+  </div>
+
+  <!-- PAGE: CHART -->
+  <div class="page" id="page-chart">
+    <div class="section-title">Histórico</div>
+    <div class="chart-card">
+      <div class="section-title" style="margin-bottom:0">Entradas × Saídas (6 meses)</div>
+      <div class="bar-chart" id="barChart"></div>
+      <div style="display:flex;gap:14px;margin-top:10px">
+        <span style="font-size:0.65rem;color:var(--green)">▮ Entradas</span>
+        <span style="font-size:0.65rem;color:var(--red)">▮ Saídas</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE: IMPORT -->
+  <div class="page" id="page-import">
+    <div class="section-title">Importar Extrato</div>
+
+    <div class="import-card" onclick="document.getElementById('fileInput').click()">
+      <div class="icon">📂</div>
+      <div class="title">Importar CSV do banco</div>
+      <div class="sub">PicPay, Nubank e outros • .csv</div>
+      <input type="file" id="fileInput" accept=".csv,.ofx" onchange="handleFileImport(event)">
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="card-label" style="margin-bottom:10px">Como exportar o extrato</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="font-size:0.75rem;color:var(--muted);line-height:1.6">
+          <span style="color:#21c25e;font-weight:600">PicPay:</span><br>
+          Extrato → ⋯ (três pontos) → Exportar extrato → CSV
+        </div>
+        <div style="font-size:0.75rem;color:var(--muted);line-height:1.6">
+          <span style="color:#8a2be2;font-weight:600">Nubank:</span><br>
+          Perfil → Meu perfil → Exportar → Exportar CSV
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:10px">
+      <div class="card-label" style="margin-bottom:6px">Detecção automática</div>
+      <div style="font-size:0.72rem;color:var(--muted);line-height:1.7">
+        O app detecta o banco pelo nome do arquivo e pelas colunas automaticamente. Basta importar — sem configuração.
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="nav-btn active" id="nav-dashboard" onclick="setPage('dashboard')">
+    <span class="nav-icon">◉</span>início
+  </button>
+  <button class="nav-btn" id="nav-transactions" onclick="setPage('transactions')">
+    <span class="nav-icon">↕</span>extrato
+  </button>
+  <button class="add-btn" onclick="openAddModal()">+</button>
+  <button class="nav-btn" id="nav-chart" onclick="setPage('chart')">
+    <span class="nav-icon">▦</span>gráficos
+  </button>
+  <button class="nav-btn" id="nav-import" onclick="setPage('import')">
+    <span class="nav-icon">⇪</span>importar
+  </button>
+</div>
+
+<!-- ADD MODAL -->
+<div class="modal-overlay" id="addModal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-title">Nova transação</div>
+
+    <div class="type-toggle">
+      <button class="type-btn active-income" id="typeIncome" onclick="setType('income')">↑ Entrada</button>
+      <button class="type-btn" id="typeExpense" onclick="setType('expense')">↓ Saída</button>
+    </div>
+
+    <div class="field-group">
+      <div class="field-label">Valor</div>
+      <div class="salary-input-wrap" style="margin-bottom:0">
+        <span class="salary-prefix">R$</span>
+        <input type="number" id="txAmount" placeholder="0,00" step="0.01" min="0">
+      </div>
+    </div>
+
+    <div class="field-group">
+      <div class="field-label">Descrição</div>
+      <input class="field-input" id="txDesc" type="text" placeholder="Ex: Supermercado, Salário...">
+    </div>
+
+    <div class="field-group">
+      <div class="field-label">Conta</div>
+      <select class="field-input" id="txAccount">
+        <option value="picpay">PicPay</option>
+        <option value="nubank">Nubank</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <div class="field-label">Categoria</div>
+      <div class="cats-grid" id="catsGrid"></div>
+    </div>
+
+    <div class="field-group">
+      <div class="field-label">Data</div>
+      <input class="field-input" id="txDate" type="date">
+    </div>
+
+    <button class="submit-btn" onclick="addTransaction()">Salvar transação</button>
+    <button class="cancel-btn" onclick="closeAddModal()">cancelar</button>
+  </div>
+</div>
+
+<!-- SALARY MODAL -->
+<div class="modal-overlay" id="salaryModal" onclick="closeSalaryModal(event)">
+  <div class="modal">
+    <div class="modal-title">Salário do mês</div>
+    <div class="salary-input-wrap">
+      <span class="salary-prefix">R$</span>
+      <input type="number" id="salaryInput" placeholder="0,00" step="0.01" min="0">
+    </div>
+    <button class="submit-btn" onclick="saveSalary()">Salvar</button>
+    <button class="cancel-btn" onclick="closeSalaryModal()">cancelar</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ===== STATE =====
+  const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const MONTH_KEYS = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+
+  let currentDate = new Date();
+  let viewMonth = currentDate.getMonth();
+  let viewYear = currentDate.getFullYear();
+
+  const CATS = [
+    { id: 'food', icon: '🛒', label: 'Mercado', color: '#f59e0b' },
+    { id: 'resto', icon: '🍽', label: 'Restaurante', color: '#ef4444' },
+    { id: 'transport', icon: '🚗', label: 'Transporte', color: '#3b82f6' },
+    { id: 'health', icon: '💊', label: 'Saúde', color: '#10b981' },
+    { id: 'leisure', icon: '🎮', label: 'Lazer', color: '#8b5cf6' },
+    { id: 'bills', icon: '💡', label: 'Contas', color: '#f97316' },
+    { id: 'salary', icon: '💰', label: 'Salário', color: '#00e5a0' },
+    { id: 'other', icon: '📦', label: 'Outros', color: '#6b7280' },
+  ];
+
+  let selectedType = 'income';
+  let selectedCat = 'other';
+  let data = {};
+
+  function getKey(y, m) { return `${y}-${String(m).padStart(2,'0')}`; }
+
+  function loadData() {
+    try {
+      const raw = localStorage.getItem('fin_data');
+      data = raw ? JSON.parse(raw) : {};
+    } catch(e) { data = {}; }
+  }
+
+  function saveData() {
+    localStorage.setItem('fin_data', JSON.stringify(data));
+  }
+
+  function getMonthData(y, m) {
+    const key = getKey(y, m);
+    if (!data[key]) data[key] = { salary: 0, transactions: [] };
+    return data[key];
+  }
+
+  // ===== INIT =====
+  loadData();
+  renderMonthLabel();
+  renderAll();
+  buildCatsGrid();
+  setTodayDate();
+
+  function setTodayDate() {
+    const d = new Date();
+    document.getElementById('txDate').value = d.toISOString().split('T')[0];
+  }
+
+  // ===== MONTH NAV =====
+  function changeMonth(dir) {
+    viewMonth += dir;
+    if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+    if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+    renderMonthLabel();
+    renderAll();
+  }
+
+  function renderMonthLabel() {
+    document.getElementById('currentMonth').textContent = `${MONTHS[viewMonth].toLowerCase()} ${viewYear}`;
+  }
+
+  // ===== RENDER =====
+  function renderAll() {
+    const md = getMonthData(viewYear, viewMonth);
+    const txs = md.transactions;
+    const salary = md.salary;
+
+    const income = txs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0) + salary;
+    const expense = txs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+    const balance = income - expense;
+
+    // Salary
+    document.getElementById('salaryDisplay').textContent = fmt(salary);
+
+    // Summary
+    document.getElementById('totalIncome').textContent = fmt(income);
+    document.getElementById('incomeCount').textContent = `${txs.filter(t=>t.type==='income').length + (salary>0?1:0)} transações`;
+    document.getElementById('totalExpense').textContent = fmt(expense);
+    document.getElementById('expenseCount').textContent = `${txs.filter(t=>t.type==='expense').length} transações`;
+
+    // Balance
+    const balEl = document.getElementById('balanceDisplay');
+    balEl.textContent = fmt(balance);
+    balEl.className = 'value balance ' + (balance > 0 ? 'positive' : balance < 0 ? 'negative' : 'zero');
+
+    const pct = income > 0 ? Math.min((expense / income) * 100, 100) : 0;
+    const bar = document.getElementById('balanceBar');
+    bar.style.width = (100 - pct) + '%';
+    bar.className = 'progress-fill' + (pct > 90 ? ' danger' : pct > 70 ? ' warning' : '');
+
+    // Accounts
+    const picTxs = txs.filter(t => t.account === 'picpay');
+    const nuTxs = txs.filter(t => t.account === 'nubank');
+    const picBal = picTxs.reduce((s,t) => t.type==='income' ? s+t.amount : s-t.amount, 0);
+    const nuBal = nuTxs.reduce((s,t) => t.type==='income' ? s+t.amount : s-t.amount, 0);
+    document.getElementById('picpayBalance').textContent = fmt(picBal);
+    document.getElementById('picpayCount').textContent = `${picTxs.length} movimentações`;
+    document.getElementById('nubankBalance').textContent = fmt(nuBal);
+    document.getElementById('nubankCount').textContent = `${nuTxs.length} movimentações`;
+
+    // Categories
+    renderCategories(txs);
+
+    // Transactions
+    renderTransactions(txs);
+
+    // Chart
+    renderChart();
+  }
+
+  function renderCategories(txs) {
+    const expenses = txs.filter(t => t.type === 'expense');
+    const total = expenses.reduce((s, t) => s + t.amount, 0);
+    const byCat = {};
+    expenses.forEach(t => {
+      byCat[t.category] = (byCat[t.category] || 0) + t.amount;
+    });
+
+    const sorted = Object.entries(byCat).sort((a,b) => b[1]-a[1]);
+    const el = document.getElementById('categoryList');
+
+    if (!sorted.length) {
+      el.innerHTML = '<div class="empty-state"><div class="ei">📊</div>Nenhum gasto ainda</div>';
+      return;
+    }
+
+    el.innerHTML = sorted.map(([catId, val]) => {
+      const cat = CATS.find(c => c.id === catId) || CATS[7];
+      const pct = total > 0 ? (val / total * 100) : 0;
+      return `
+        <div class="cat-row">
+          <div class="cat-icon" style="background:${cat.color}22">${cat.icon}</div>
+          <div class="cat-info">
+            <div class="cat-name">${cat.label}</div>
+            <div class="cat-bar-bg">
+              <div class="cat-bar-fill" style="width:${pct}%;background:${cat.color}"></div>
+            </div>
+          </div>
+          <div class="cat-value">${fmt(val)}</div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderTransactions(txs) {
+    const el = document.getElementById('txList');
+    const sorted = [...txs].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+    if (!sorted.length) {
+      el.innerHTML = '<div class="empty-state"><div class="ei">💸</div>Nenhuma transação ainda</div>';
+      return;
+    }
+
+    el.innerHTML = sorted.map(tx => {
+      const cat = CATS.find(c => c.id === tx.category) || CATS[7];
+      const d = new Date(tx.date + 'T12:00:00');
+      const dateStr = d.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'});
+      return `
+        <div class="tx-item">
+          <div class="tx-icon ${tx.type}">${cat.icon}</div>
+          <div class="tx-info">
+            <div class="tx-desc">${tx.desc || cat.label}</div>
+            <div class="tx-meta">
+              ${dateStr}
+              <span class="tx-account-badge ${tx.account}">${tx.account}</span>
+            </div>
+          </div>
+          <div class="tx-amount ${tx.type}">${tx.type==='expense'?'-':'+'} ${fmt(tx.amount)}</div>
+          <button class="tx-delete" onclick="deleteTransaction('${tx.id}')">✕</button>
+        </div>`;
+    }).join('');
+  }
+
+  function renderChart() {
+    const el = document.getElementById('barChart');
+    const months = [];
+    for (let i = 5; i >= 0; i--) {
+      let m = viewMonth - i;
+      let y = viewYear;
+      while (m < 0) { m += 12; y--; }
+      months.push({ m, y, label: MONTHS[m].substring(0,3).toLowerCase() });
+    }
+
+    const maxVal = months.reduce((max, {m, y}) => {
+      const md = getMonthData(y, m);
+      const inc = md.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0) + md.salary;
+      const exp = md.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+      return Math.max(max, inc, exp);
+    }, 1);
+
+    el.innerHTML = months.map(({m, y, label}) => {
+      const md = getMonthData(y, m);
+      const inc = md.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0) + md.salary;
+      const exp = md.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+      const incH = Math.round((inc / maxVal) * 65);
+      const expH = Math.round((exp / maxVal) * 65);
+      return `
+        <div class="bar-group">
+          <div class="bar-wrap">
+            <div class="bar inc" style="height:${incH}px"></div>
+            <div class="bar exp" style="height:${expH}px"></div>
+          </div>
+          <div class="bar-label">${label}</div>
+        </div>`;
+    }).join('');
+  }
+
+  // ===== PAGES =====
+  function setPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    document.getElementById('nav-' + name).classList.add('active');
+  }
+
+  // ===== MODAL =====
+  function openAddModal() {
+    document.getElementById('addModal').classList.add('open');
+    setType('income');
+    document.getElementById('txAmount').value = '';
+    document.getElementById('txDesc').value = '';
+    setTodayDate();
+  }
+
+  function closeAddModal() {
+    document.getElementById('addModal').classList.remove('open');
+  }
+
+  function closeModal(e) {
+    if (e.target.classList.contains('modal-overlay')) closeAddModal();
+  }
+
+  function setType(type) {
+    selectedType = type;
+    document.getElementById('typeIncome').className = 'type-btn' + (type==='income' ? ' active-income' : '');
+    document.getElementById('typeExpense').className = 'type-btn' + (type==='expense' ? ' active-expense' : '');
+  }
+
+  function buildCatsGrid() {
+    const el = document.getElementById('catsGrid');
+    el.innerHTML = CATS.map(c => `
+      <button class="cat-btn ${c.id === selectedCat ? 'selected' : ''}" id="cat-${c.id}" onclick="selectCat('${c.id}')">
+        <span class="ci">${c.icon}</span>
+        <span class="cn">${c.label}</span>
+      </button>`).join('');
+  }
+
+  function selectCat(id) {
+    selectedCat = id;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('cat-' + id).classList.add('selected');
+  }
+
+  function addTransaction() {
+    const amount = parseFloat(document.getElementById('txAmount').value);
+    const desc = document.getElementById('txDesc').value.trim();
+    const account = document.getElementById('txAccount').value;
+    const date = document.getElementById('txDate').value;
+
+    if (!amount || amount <= 0) { showToast('Informe um valor válido', 'error'); return; }
+    if (!date) { showToast('Informe a data', 'error'); return; }
+
+    const d = new Date(date + 'T12:00:00');
+    const md = getMonthData(d.getFullYear(), d.getMonth());
+
+    md.transactions.push({
+      id: Date.now().toString(),
+      type: selectedType,
+      amount,
+      desc: desc || CATS.find(c=>c.id===selectedCat)?.label || 'Transação',
+      account,
+      category: selectedCat,
+      date
+    });
+
+    saveData();
+    closeAddModal();
+    renderAll();
+    showToast('Transação salva ✓', 'success');
+  }
+
+  function deleteTransaction(id) {
+    const md = getMonthData(viewYear, viewMonth);
+    md.transactions = md.transactions.filter(t => t.id !== id);
+    saveData();
+    renderAll();
+    showToast('Removida', 'success');
+  }
+
+  // ===== SALARY =====
+  function openSalaryModal() {
+    const md = getMonthData(viewYear, viewMonth);
+    document.getElementById('salaryInput').value = md.salary || '';
+    document.getElementById('salaryModal').classList.add('open');
+    setTimeout(() => document.getElementById('salaryInput').focus(), 100);
+  }
+
+  function closeSalaryModal(e) {
+    if (!e || e.target.classList.contains('modal-overlay'))
+      document.getElementById('salaryModal').classList.remove('open');
+  }
+
+  function saveSalary() {
+    const val = parseFloat(document.getElementById('salaryInput').value);
+    if (isNaN(val) || val < 0) { showToast('Valor inválido', 'error'); return; }
+    const md = getMonthData(viewYear, viewMonth);
+    md.salary = val;
+    saveData();
+    closeSalaryModal();
+    renderAll();
+    showToast('Salário salvo ✓', 'success');
+  }
+
+  // ===== IMPORT CSV =====
+  function parseCSVLine(line) {
+    // Handles quoted fields with commas inside
+    const result = [];
+    let cur = '', inQuote = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQuote = !inQuote; }
+      else if (c === ',' && !inQuote) { result.push(cur.trim()); cur = ''; }
+      else { cur += c; }
+    }
+    result.push(cur.trim());
+    return result;
+  }
+
+  function detectBank(headers) {
+    const h = headers.join(',').toLowerCase();
+    if (h.includes('identificador') && h.includes('descrição')) return 'nubank';
+    if (h.includes('origem') && h.includes('forma de pagamento')) return 'picpay';
+    return 'generic';
+  }
+
+  function parseDateBR(raw) {
+    // dd/mm/yyyy
+    const [d,m,y] = raw.split('/');
+    return new Date(`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}T12:00:00`);
+  }
+
+  function parseDateISO(raw) {
+    // yyyy-mm-dd
+    return new Date(raw + 'T12:00:00');
+  }
+
+  function parseAmount(raw) {
+    // Handles: -18.50 / −R$ 14,00 / +R$ 700,00 / 1.882,83
+    let s = raw
+      .replace(/\u2212/g, '-')   // unicode minus → hyphen
+      .replace(/\+/g, '')
+      .replace(/R\$\s*/g, '')
+      .replace(/\./g, '')         // thousands separator
+      .replace(',', '.')
+      .trim();
+    return parseFloat(s);
+  }
+
+  function handleFileImport(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Detect account from filename
+    const fname = file.name.toLowerCase();
+    let defaultAccount = 'picpay';
+    if (fname.startsWith('nu_') || fname.includes('nubank')) defaultAccount = 'nubank';
+    else if (fname.startsWith('extrato-') || fname.includes('picpay')) defaultAccount = 'picpay';
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target.result;
+        const lines = text.split('\n').filter(l => l.trim());
+        if (lines.length < 2) { showToast('Arquivo vazio ou inválido', 'error'); return; }
+
+        const headers = parseCSVLine(lines[0]);
+        const bank = detectBank(headers);
+        let imported = 0;
+        let skipped = 0;
+
+        // Build a set of all existing transaction IDs across all months for dedup
+        const existingIds = new Set();
+        Object.values(data).forEach(md => {
+          (md.transactions || []).forEach(t => existingIds.add(t.id));
+        });
+
+        for (let i = 1; i < lines.length; i++) {
+          const parts = parseCSVLine(lines[i]);
+          if (parts.length < 3) continue;
+
+          let dateObj, amount, type, desc, account = defaultAccount, txId;
+
+          // ── NUBANK ──
+          // Data,Valor,Identificador,Descrição
+          if (bank === 'nubank') {
+            const [rawDate, rawVal, rawId, rawDesc] = parts;
+            dateObj = parseDateBR(rawDate);
+            amount = parseAmount(rawVal);
+            if (isNaN(amount) || isNaN(dateObj.getTime())) continue;
+            type = amount < 0 ? 'expense' : 'income';
+            amount = Math.abs(amount);
+            desc = (rawDesc || '').replace(/- \d{2,3}\.\d{3}\.\d{3}\/\d{4}-\d{2}.*/,'').replace(/- •••\..*/,'').replace(/Transferência recebida pelo Pix - /i,'').replace(/Transferência Recebida - /i,'').replace(/Transferência enviada pelo Pix - /i,'').replace(/Compra no débito via NuPay - /i,'').replace(/Compra no débito - /i,'').trim();
+            account = 'nubank';
+            // Use Nubank's UUID as the unique ID
+            txId = 'nu_' + (rawId || '').trim();
+          }
+
+          // ── PICPAY ──
+          // data,hora,tipo,"origem/destino",valor,"forma de pagamento"
+          else if (bank === 'picpay') {
+            const [rawDate, rawHora, rawTipo, rawDest, rawVal] = parts;
+            dateObj = parseDateISO(rawDate);
+            amount = parseAmount(rawVal);
+            if (isNaN(amount) || isNaN(dateObj.getTime())) continue;
+
+            const tipoLower = (rawTipo || '').toLowerCase();
+            if (tipoLower.includes('dinheiro guardado') || tipoLower.includes('cofrinho')) continue;
+
+            type = (tipoLower.includes('recebido') || tipoLower.includes('recebida')) ? 'income' : 'expense';
+            amount = Math.abs(amount);
+            desc = (rawDest || rawTipo || 'PicPay').trim();
+            account = 'picpay';
+            // Composite key: date + time + amount + destination
+            txId = 'pp_' + rawDate + '_' + (rawHora||'').trim() + '_' + amount.toFixed(2) + '_' + desc.substring(0,20);
+          }
+
+          // ── GENÉRICO ──
+          else {
+            const [rawDate, rawDescG, rawVal, rawType] = parts;
+            dateObj = rawDate.includes('/') ? parseDateBR(rawDate) : parseDateISO(rawDate);
+            amount = parseAmount(rawVal);
+            if (isNaN(amount) || isNaN(dateObj.getTime())) continue;
+            type = amount < 0 ? 'expense' : 'income';
+            if (rawType) {
+              if (/saída|saida|debito/i.test(rawType)) type = 'expense';
+              if (/entrada|credito/i.test(rawType)) type = 'income';
+            }
+            amount = Math.abs(amount);
+            desc = rawDescG || 'Importado';
+            txId = 'gen_' + rawDate + '_' + amount.toFixed(2) + '_' + desc.substring(0,20);
+          }
+
+          // ── DEDUPLICATION ──
+          if (existingIds.has(txId)) { skipped++; continue; }
+          existingIds.add(txId);
+
+          const isoDate = dateObj.toISOString().split('T')[0];
+          const md = getMonthData(dateObj.getFullYear(), dateObj.getMonth());
+
+          md.transactions.push({
+            id: txId,
+            type,
+            amount,
+            desc: desc || 'Importado',
+            account,
+            category: guessCategory(desc),
+            date: isoDate
+          });
+          imported++;
+        }
+
+        saveData();
+        renderAll();
+        const msg = skipped > 0
+          ? `${imported} importadas · ${skipped} duplicatas ignoradas`
+          : `${imported} transações importadas ✓`;
+        showToast(msg, 'success');
+        event.target.value = '';
+      } catch(err) {
+        console.error(err);
+        showToast('Erro ao importar: ' + err.message, 'error');
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  }
+
+  function guessCategory(desc) {
+    const d = (desc||'').toLowerCase();
+    if (/mercado|supermercado|feira|atacarejo|sendas|assai|extra|carrefour/.test(d)) return 'food';
+    if (/restaurante|lanche|ifood|pizza|delivery|aroma e sabor|sorveteria|gvl comercio/.test(d)) return 'resto';
+    if (/uber|99pay|gasolina|combustivel|estacionamento|onibus|posto|frei damiao/.test(d)) return 'transport';
+    if (/farmacia|hospital|medico|saude|consulta|drogaria/.test(d)) return 'health';
+    if (/netflix|spotify|cinema|jogo|game|paggo|entretenimento/.test(d)) return 'leisure';
+    if (/luz|energia|agua|cagepa|internet|brisanet|aluguel|caixa economica|habitacao|topsat|rastreamento|claro|tim|vivo/.test(d)) return 'bills';
+    if (/salario|salário|renda|ricardo batista|uber do brasil/.test(d)) return 'salary';
+    return 'other';
+  }
+
+  // ===== UTILS =====
+  function fmt(val) {
+    return 'R$ ' + Math.abs(val).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show ' + type;
+    setTimeout(() => t.className = 'toast', 2500);
+  }
+</script>
+</body>
+</html>
