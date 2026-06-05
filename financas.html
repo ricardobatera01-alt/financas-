@@ -778,12 +778,12 @@
     </div>
 
     <div class="summary-grid">
-      <div class="card">
+      <div class="card" onclick="openSummaryModal('income')" style="cursor:pointer">
         <div class="card-label">Entradas</div>
         <div class="card-value income" id="totalIncome">R$ 0,00</div>
         <div class="card-sub" id="incomeCount">0 transações</div>
       </div>
-      <div class="card">
+      <div class="card" onclick="openSummaryModal('expense')" style="cursor:pointer">
         <div class="card-label">Saídas</div>
         <div class="card-value expense" id="totalExpense">R$ 0,00</div>
         <div class="card-sub" id="expenseCount">0 transações</div>
@@ -1023,10 +1023,71 @@
   </div>
 </div>
 
+
+<!-- SUMMARY MODAL (Entradas / Saídas total) -->
+<div class="modal-overlay" id="summaryModal" onclick="closeSummaryModal(event)">
+  <div class="modal" style="max-height:85vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div class="modal-title" id="summaryModalTitle" style="margin-bottom:0"></div>
+      <div id="summaryModalTotal" style="font-family:'Inter',sans-serif;font-weight:700;font-size:1.1rem"></div>
+    </div>
+    <div id="summaryModalCats" class="category-list" style="margin-bottom:14px"></div>
+    <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.3px;color:var(--muted);margin-bottom:8px">Transações</div>
+    <div class="tx-list" id="summaryModalTxList"></div>
+    <button class="cancel-btn" onclick="closeSummaryModal()">fechar</button>
+  </div>
+</div>
+
+<!-- EDIT CATEGORY MODAL -->
+<div class="modal-overlay" id="editCatModal" onclick="closeEditCatModal(event)">
+  <div class="modal">
+    <div class="modal-title">Alterar categoria</div>
+    <div id="editCatTxInfo" style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:16px;font-size:0.8rem;color:var(--muted)"></div>
+    <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.3px;color:var(--muted);margin-bottom:8px">Escolha a categoria</div>
+    <div class="cats-grid" id="editCatGrid" style="margin-bottom:12px"></div>
+    <button class="submit-btn" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);margin-bottom:8px" onclick="openManageCatsModal()">+ criar nova categoria</button>
+    <button class="submit-btn" id="editCatSaveBtn" onclick="saveEditCat()">Salvar</button>
+    <button class="cancel-btn" onclick="closeEditCatModal()">cancelar</button>
+  </div>
+</div>
+
+<!-- MANAGE CATEGORIES MODAL -->
+<div class="modal-overlay" id="manageCatsModal" onclick="closeManageCatsModal(event)">
+  <div class="modal" style="max-height:85vh;overflow-y:auto">
+    <div class="modal-title">Categorias</div>
+    <div id="manageCatsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px"></div>
+    <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.3px;color:var(--muted);margin-bottom:8px">Nova categoria</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <input class="field-input" id="newCatEmoji" placeholder="🏷" style="width:56px;text-align:center;padding:10px 6px">
+      <input class="field-input" id="newCatName" placeholder="Nome da categoria" style="flex:1">
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="colorPicker"></div>
+    <button class="submit-btn" onclick="createNewCategory()">Criar categoria</button>
+    <button class="cancel-btn" onclick="closeManageCatsModal()">voltar</button>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
+  // ===== CUSTOM CATEGORIES (must be defined before init) =====
+  const PRESET_COLORS = ['#00e5a0','#ff5c5c','#5c9fff','#ffd166','#f97316','#8b5cf6','#10b981','#ef4444','#3b82f6','#ec4899'];
+  let newCatColor = PRESET_COLORS[0];
+  let customCats = [];
+
+  function loadCustomCats() {
+    try { customCats = JSON.parse(localStorage.getItem('fin_custom_cats') || '[]'); } catch(e) { customCats = []; }
+  }
+
+  function saveCustomCats() {
+    localStorage.setItem('fin_custom_cats', JSON.stringify(customCats));
+  }
+
+  function getAllCats() {
+    return [...CATS, ...customCats];
+  }
+
   // ===== STATE =====
   const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const MONTH_KEYS = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
@@ -1072,6 +1133,7 @@
 
   // ===== INIT =====
   loadData();
+  loadCustomCats();
   renderMonthLabel();
   renderAll();
   buildCatsGrid();
@@ -1164,7 +1226,7 @@
     }
 
     el.innerHTML = sorted.map(([catId, val]) => {
-      const cat = CATS.find(c => c.id === catId) || CATS[7];
+      const cat = getAllCats().find(c => c.id === catId) || getAllCats()[7];
       const pct = total > 0 ? (val / total * 100) : 0;
       const pctLabel = pct.toFixed(1) + '%';
       return `
@@ -1194,18 +1256,19 @@
     }
 
     el.innerHTML = sorted.map(tx => {
-      const cat = CATS.find(c => c.id === tx.category) || CATS[7];
+      const cat = getAllCats().find(c => c.id === tx.category) || getAllCats()[7];
       const d = new Date(tx.date + 'T12:00:00');
       const dateStr = d.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'});
       const isTransfer = tx.category === 'transfer';
       return `
         <div class="tx-item" style="${isTransfer ? 'opacity:0.5' : ''}">
-          <div class="tx-icon ${tx.type}">${cat.icon}</div>
-          <div class="tx-info">
+          <div class="tx-icon ${tx.type}" onclick="openEditCatModal('${tx.id}')" style="cursor:pointer" title="Editar categoria">${cat.icon}</div>
+          <div class="tx-info" onclick="openEditCatModal('${tx.id}')" style="cursor:pointer">
             <div class="tx-desc">${tx.desc || cat.label}${isTransfer ? ' <span class="transfer-badge">transferência</span>' : ''}</div>
             <div class="tx-meta">
               ${dateStr}
               <span class="tx-account-badge ${tx.account}">${tx.account}</span>
+              <span style="color:var(--muted);font-size:0.6rem">✏ categoria</span>
             </div>
           </div>
           <div class="tx-amount ${isTransfer ? '' : tx.type}" style="${isTransfer ? 'color:var(--muted)' : ''}">${tx.type==='expense'?'-':'+'} ${fmt(tx.amount)}</div>
@@ -1281,7 +1344,7 @@
 
   function buildCatsGrid() {
     const el = document.getElementById('catsGrid');
-    el.innerHTML = CATS.map(c => `
+    el.innerHTML = getAllCats().map(c => `
       <button class="cat-btn ${c.id === selectedCat ? 'selected' : ''}" id="cat-${c.id}" onclick="selectCat('${c.id}')">
         <span class="ci">${c.icon}</span>
         <span class="cn">${c.label}</span>
@@ -1478,15 +1541,11 @@
             // Composite key: date + time + amount + destination
             txId = 'pp_' + rawDate + '_' + (rawHora||'').trim() + '_' + amount.toFixed(2) + '_' + desc.substring(0,20);
 
-            // Salary rule: Pix received on PicPay from own name (BB transfer) → mark as salary
-            const isSelfTransferBB = type === 'income' && /ricardo batista dos santos/i.test(desc);
-            if (isSelfTransferBB) {
-              // Accumulate into salary field for the month instead of a transaction
-              const salaryMd = getMonthData(dateObj.getFullYear(), dateObj.getMonth());
-              salaryMd.salary = (salaryMd.salary || 0) + amount;
-              saveData();
-              imported++;
-              continue; // skip adding as regular transaction
+            // Self-transfer detection (Nubank ↔ PicPay via own name)
+            const isSelfTransfer = type === 'income' && /ricardo batista dos santos/i.test(desc) && account === 'picpay';
+            if (isSelfTransfer) {
+              // Keep as transaction but mark as transfer — excluded from totals
+              // Will be visible in extrato with transfer badge
             }
           }
 
@@ -1641,7 +1700,7 @@
     const color = type === 'income' ? 'var(--green)' : 'var(--red)';
 
     document.getElementById('accountCatList').innerHTML = sorted.map(([catId, val]) => {
-      const cat = CATS.find(c=>c.id===catId)||CATS[7];
+      const cat = getAllCats().find(c=>c.id===catId)||getAllCats()[7];
       const pct = total > 0 ? (val/total*100) : 0;
       return `
         <div class="cat-row">
@@ -1665,7 +1724,7 @@
       return;
     }
     el.innerHTML = sorted.map(tx => {
-      const cat = CATS.find(c => c.id === tx.category) || CATS[7];
+      const cat = getAllCats().find(c => c.id === tx.category) || getAllCats()[7];
       const d = new Date(tx.date + 'T12:00:00');
       const dateStr = d.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'});
       return `
@@ -1682,7 +1741,7 @@
 
   // ===== CATEGORY MODAL =====
   function openCategoryModal(catId) {
-    const cat = CATS.find(c => c.id === catId) || CATS[7];
+    const cat = getAllCats().find(c => c.id === catId) || getAllCats()[7];
     const md = getMonthData(viewYear, viewMonth);
     const txs = md.transactions.filter(t => t.type === 'expense' && t.category === catId);
     const total = txs.reduce((s,t) => s+t.amount, 0);
@@ -1723,6 +1782,187 @@
   function closeCategoryModal(e) {
     if (!e || e.target.classList.contains('modal-overlay'))
       document.getElementById('categoryModal').classList.remove('open');
+  }
+
+
+  // ===== SUMMARY MODAL (Entradas / Saídas) =====
+  function openSummaryModal(type) {
+    const md = getMonthData(viewYear, viewMonth);
+    const txs = md.transactions.filter(t => t.type === type && t.category !== 'transfer');
+    const total = txs.reduce((s,t) => s+t.amount, 0);
+    const color = type === 'income' ? 'var(--green)' : 'var(--red)';
+    const label = type === 'income' ? 'Entradas' : 'Saídas';
+    const sign = type === 'income' ? '+ ' : '- ';
+
+    document.getElementById('summaryModalTitle').innerHTML = `<span style="color:${color}">${label}</span>`;
+    document.getElementById('summaryModalTotal').textContent = sign + fmt(total);
+    document.getElementById('summaryModalTotal').style.color = color;
+
+    // Category breakdown
+    const byCat = {};
+    txs.forEach(t => { byCat[t.category] = (byCat[t.category]||0) + t.amount; });
+    const sorted = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+    const catEl = document.getElementById('summaryModalCats');
+    catEl.innerHTML = sorted.map(([catId, val]) => {
+      const cat = getAllCats().find(c=>c.id===catId) || getAllCats()[7];
+      const pct = total > 0 ? (val/total*100) : 0;
+      return `
+        <div class="cat-row">
+          <div class="cat-icon" style="background:${cat.color}22">${cat.icon}</div>
+          <div class="cat-info">
+            <div style="display:flex;justify-content:space-between">
+              <div class="cat-name">${cat.label}</div>
+              <div style="font-size:0.6rem;color:var(--muted)">${pct.toFixed(1)}%</div>
+            </div>
+            <div class="cat-bar-bg"><div class="cat-bar-fill" style="width:${pct}%;background:${cat.color}"></div></div>
+          </div>
+          <div class="cat-value" style="color:${color}">${sign}${fmt(val)}</div>
+        </div>`;
+    }).join('');
+
+    // Transactions
+    const txEl = document.getElementById('summaryModalTxList');
+    const txSorted = [...txs].sort((a,b)=>new Date(b.date)-new Date(a.date));
+    txEl.innerHTML = txSorted.map(tx => {
+      const cat = getAllCats().find(c=>c.id===tx.category)||getAllCats()[7];
+      const d = new Date(tx.date+'T12:00:00');
+      const dateStr = d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+      return `
+        <div class="tx-item">
+          <div class="tx-icon ${tx.type}">${cat.icon}</div>
+          <div class="tx-info">
+            <div class="tx-desc">${tx.desc}</div>
+            <div class="tx-meta">${dateStr} <span class="tx-account-badge ${tx.account}">${tx.account}</span></div>
+          </div>
+          <div class="tx-amount ${tx.type}">${sign}${fmt(tx.amount)}</div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('summaryModal').classList.add('open');
+  }
+
+  function closeSummaryModal(e) {
+    if (!e || e.target.classList.contains('modal-overlay'))
+      document.getElementById('summaryModal').classList.remove('open');
+  }
+
+  // ===== EDIT CATEGORY MODAL =====
+  let editCatTxId = null;
+  let editCatSelected = null;
+
+  function openEditCatModal(txId) {
+    editCatTxId = txId;
+    const md = getMonthData(viewYear, viewMonth);
+    const tx = md.transactions.find(t => t.id === txId);
+    if (!tx) return;
+
+    editCatSelected = tx.category;
+    const d = new Date(tx.date+'T12:00:00');
+    document.getElementById('editCatTxInfo').innerHTML = `
+      <div style="font-weight:600;color:var(--text);margin-bottom:2px">${tx.desc}</div>
+      <div>${d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'})} · ${tx.type==='expense'?'- ':'+ '}${fmt(tx.amount)}</div>`;
+
+    buildEditCatGrid();
+    document.getElementById('editCatModal').classList.add('open');
+  }
+
+  function buildEditCatGrid() {
+    const el = document.getElementById('editCatGrid');
+    el.innerHTML = getAllCats().map(c => `
+      <button class="cat-btn ${c.id === editCatSelected ? 'selected' : ''}" id="editcat-${c.id}" onclick="selectEditCat('${c.id}')">
+        <span class="ci">${c.icon}</span>
+        <span class="cn">${c.label}</span>
+      </button>`).join('');
+  }
+
+  function selectEditCat(id) {
+    editCatSelected = id;
+    document.querySelectorAll('#editCatGrid .cat-btn').forEach(b => b.classList.remove('selected'));
+    const btn = document.getElementById('editcat-' + id);
+    if (btn) btn.classList.add('selected');
+  }
+
+  function saveEditCat() {
+    if (!editCatTxId || !editCatSelected) return;
+    // Search across all months
+    Object.values(data).forEach(md => {
+      const tx = (md.transactions||[]).find(t => t.id === editCatTxId);
+      if (tx) tx.category = editCatSelected;
+    });
+    saveData();
+    renderAll();
+    closeEditCatModal();
+    showToast('Categoria atualizada ✓', 'success');
+  }
+
+  function closeEditCatModal(e) {
+    if (!e || e.target.classList.contains('modal-overlay'))
+      document.getElementById('editCatModal').classList.remove('open');
+  }
+
+  // ===== MANAGE CATEGORIES =====
+  // [moved to top]
+
+  function openManageCatsModal() {
+    buildColorPicker();
+    renderManageCatsList();
+    document.getElementById('manageCatsModal').classList.add('open');
+  }
+
+  function closeManageCatsModal(e) {
+    if (!e || e.target.classList.contains('modal-overlay'))
+      document.getElementById('manageCatsModal').classList.remove('open');
+  }
+
+  function buildColorPicker() {
+    const el = document.getElementById('colorPicker');
+    el.innerHTML = PRESET_COLORS.map(c => `
+      <div onclick="selectNewCatColor('${c}')" style="width:26px;height:26px;border-radius:8px;background:${c};cursor:pointer;border:2px solid ${c===newCatColor?'white':'transparent'};transition:all 0.15s" id="clr-${c.replace('#','')}"></div>
+    `).join('');
+  }
+
+  function selectNewCatColor(color) {
+    newCatColor = color;
+    buildColorPicker();
+  }
+
+  function renderManageCatsList() {
+    const el = document.getElementById('manageCatsList');
+    const all = getAllCats();
+    el.innerHTML = all.map((c, i) => {
+      const isCustom = customCats.find(cc => cc.id === c.id);
+      return `
+        <div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px">
+          <div style="font-size:1.2rem">${c.icon}</div>
+          <div style="flex:1;font-size:0.8rem">${c.label}</div>
+          <div style="width:12px;height:12px;border-radius:50%;background:${c.color}"></div>
+          ${isCustom ? `<button onclick="deleteCustomCat('${c.id}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.85rem">✕</button>` : '<div style="width:20px"></div>'}
+        </div>`;
+    }).join('');
+  }
+
+  function createNewCategory() {
+    const emoji = document.getElementById('newCatEmoji').value.trim() || '🏷';
+    const name = document.getElementById('newCatName').value.trim();
+    if (!name) { showToast('Informe o nome', 'error'); return; }
+
+    const id = 'custom_' + Date.now();
+    customCats.push({ id, icon: emoji, label: name, color: newCatColor });
+    saveCustomCats();
+
+    document.getElementById('newCatEmoji').value = '';
+    document.getElementById('newCatName').value = '';
+    renderManageCatsList();
+    buildEditCatGrid();
+    showToast('Categoria criada ✓', 'success');
+  }
+
+  function deleteCustomCat(id) {
+    customCats = customCats.filter(c => c.id !== id);
+    saveCustomCats();
+    renderManageCatsList();
+    buildEditCatGrid();
+    showToast('Categoria removida', 'success');
   }
 
   // ===== UTILS =====
