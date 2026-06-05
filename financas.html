@@ -1195,17 +1195,18 @@
       const cat = CATS.find(c => c.id === tx.category) || CATS[7];
       const d = new Date(tx.date + 'T12:00:00');
       const dateStr = d.toLocaleDateString('pt-BR', {day:'2-digit', month:'short'});
+      const isTransfer = tx.category === 'transfer';
       return `
-        <div class="tx-item">
+        <div class="tx-item" style="${isTransfer ? 'opacity:0.5' : ''}">
           <div class="tx-icon ${tx.type}">${cat.icon}</div>
           <div class="tx-info">
-            <div class="tx-desc">${tx.desc || cat.label}</div>
+            <div class="tx-desc">${tx.desc || cat.label}${isTransfer ? ' <span class="transfer-badge">transferência</span>' : ''}</div>
             <div class="tx-meta">
               ${dateStr}
               <span class="tx-account-badge ${tx.account}">${tx.account}</span>
             </div>
           </div>
-          <div class="tx-amount ${tx.type}">${tx.type==='expense'?'-':'+'} ${fmt(tx.amount)}</div>
+          <div class="tx-amount ${isTransfer ? '' : tx.type}" style="${isTransfer ? 'color:var(--muted)' : ''}">${tx.type==='expense'?'-':'+'} ${fmt(tx.amount)}</div>
           <button class="tx-delete" onclick="deleteTransaction('${tx.id}')">✕</button>
         </div>`;
     }).join('');
